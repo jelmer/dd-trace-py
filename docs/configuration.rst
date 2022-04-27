@@ -204,6 +204,20 @@ below:
        Example: ``DD_TRACE_PROPAGATION_STYLE_INJECT="datadog,b3"`` to inject both ``x-datadog-*`` and ``x-b3-*``
        headers into outbound requests.
 
+       .. _dd-trace-x-datadog-tags-max-length:
+   * - ``DD_TRACE_X_DATADOG_TAGS_MAX_LENGTH``
+     - Integer
+     - 128
+     - If the value is 0, Datadog trace tags propagation is disabled.
+
+       .. _dd-trace-x-datadog-tags-propagate-service:
+   * - ``DD_TRACE_X_DATADOG_TAGS_PROPAGATE_SERVICE``
+     - Boolean
+     - False
+     - Enable propagation of service in Datadog trace tags propagation. The
+       value used is the first 10 hexadecimal characters of the SHA256 hash of
+       the UTF8 encoded service name.
+
        .. _dd-profiling-enabled:
    * - ``DD_PROFILING_ENABLED``
      - Boolean

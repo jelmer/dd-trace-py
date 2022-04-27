@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import pytest
 
 from ddtrace.settings import Config
@@ -320,3 +322,38 @@ def test_environment_header_tags():
     assert config._header_tag_name("User-agent") == "http.user_agent"
     # Case insensitive
     assert config._header_tag_name("User-Agent") == "http.user_agent"
+
+
+@contextmanager
+def no_exceptions_raised():
+    yield
+
+
+@pytest.mark.parametrize(
+    "env,expected,raises",
+    (
+        (dict(), (128, True), no_exceptions_raised()),
+        (dict(DD_TRACE_X_DATADOG_TAGS_MAX_LENGTH="0"), (0, False), no_exceptions_raised()),
+        (dict(DD_TRACE_X_DATADOG_TAGS_MAX_LENGTH="256"), (256, True), no_exceptions_raised()),
+        (dict(DD_TRACE_X_DATADOG_TAGS_MAX_LENGTH="-1"), None, pytest.raises(ValueError)),
+    ),
+)
+def test_x_datadog_tags(env, expected, raises):
+    with override_env(env):
+        with raises:
+            _ = Config()
+            assert expected == (_._x_datadog_tags_max_length, _._x_datadog_tags_enabled)
+
+
+@pytest.mark.parametrize(
+    "env,expected",
+    (
+        (dict(), False),
+        (dict(DD_TRACE_X_DATADOG_TAGS_PROPAGATE_SERVICE="1"), True),
+        (dict(DD_TRACE_X_DATADOG_TAGS_PROPAGATE_SERVICE="0"), False),
+    ),
+)
+def test_x_datadog_tags_propagate_service(env, expected):
+    with override_env(env):
+        _ = Config()
+        assert _._x_datadog_tags_propagate_service is expected
