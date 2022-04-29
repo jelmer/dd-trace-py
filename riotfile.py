@@ -1342,6 +1342,15 @@ venv = Venv(
             ],
         ),
         Venv(
+            name="graphql",
+            pys=select_pys(min_version="3.6"),
+            command="pytest {cmdargs} tests/contrib/graphql",
+            pkgs={
+                "graphql-core": latest,
+                "pytest-asyncio": latest,
+            },
+        ),
+        Venv(
             name="rq",
             command="pytest tests/contrib/rq",
             venvs=[
