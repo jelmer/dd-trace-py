@@ -98,7 +98,7 @@ def test_inject_tags_large(tracer):
         HTTPPropagator.inject(span.context, headers)
 
         assert _HTTP_HEADER_TAGS not in headers
-        assert ctx._meta["_dd.propagation_error"] == "max_size"
+        assert ctx._meta["_dd.propagation_error"] == "inject_max_size"
 
 
 def test_inject_tags_invalid(tracer):
@@ -219,7 +219,34 @@ def test_extract_invalid_tags(tracer):
         assert span.parent_id == 5678
         assert span.context.sampling_priority == 1
         assert span.context.dd_origin == "synthetics"
-        assert span.context._meta == {"_dd.origin": "synthetics"}
+        assert span.context._meta == {
+            "_dd.origin": "synthetics",
+            "_dd.propagation_error": "decoding_error",
+        }
+
+
+def test_extract_tags_large(tracer):
+    """When we have a tagset larger than the extract limit"""
+    # DEV: Limit is 512
+    headers = {
+        "x-datadog-trace-id": "1234",
+        "x-datadog-parent-id": "5678",
+        "x-datadog-sampling-priority": "1",
+        "x-datadog-origin": "synthetics",
+        "x-datadog-tags": "key=" + ("x" * (512 - len("key=") + 1)),
+    }
+    context = HTTPPropagator.extract(headers)
+    tracer.context_provider.activate(context)
+
+    with tracer.trace("local_root_span") as span:
+        assert span.trace_id == 1234
+        assert span.parent_id == 5678
+        assert span.context.sampling_priority == 1
+        assert span.context.dd_origin == "synthetics"
+        assert span.context._meta == {
+            "_dd.origin": "synthetics",
+            "_dd.propagation_error": "extract_max_size",
+        }
 
 
 @pytest.mark.parametrize("trace_id", ["one", None, "123.4", "", NOT_SET])

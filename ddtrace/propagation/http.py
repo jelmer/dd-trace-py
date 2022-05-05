@@ -12,7 +12,8 @@ from ..constants import USER_KEEP
 from ..context import Context
 from ..internal._tagset import TagsetDecodeError
 from ..internal._tagset import TagsetEncodeError
-from ..internal._tagset import TagsetMaxSizeError
+from ..internal._tagset import TagsetMaxSizeEncodeError
+from ..internal._tagset import TagsetMaxSizeDecodeError
 from ..internal._tagset import decode_tagset_string
 from ..internal._tagset import encode_tagset_values
 from ..internal.compat import ensure_str
@@ -148,9 +149,9 @@ class _DatadogMultiHeader:
                 headers[_HTTP_HEADER_TAGS] = encode_tagset_values(
                     tags_to_encode, max_size=config._x_datadog_tags_max_length
                 )
-            except TagsetMaxSizeError:
+            except TagsetMaxSizeEncodeError:
                 # We hit the max size allowed, add a tag to the context to indicate this happened
-                span_context._meta["_dd.propagation_error"] = "max_size"
+                span_context._meta["_dd.propagation_error"] = "inject_max_size"
                 log.warning("failed to encode x-datadog-tags", exc_info=True)
             except TagsetEncodeError:
                 # We hit an encoding error, add a tag to the context to indicate this happened
@@ -199,7 +200,15 @@ class _DatadogMultiHeader:
                         if k not in _DatadogMultiHeader._X_DATADOG_TAGS_REJECT
                     },
                 )
+            except TagsetMaxSizeDecodeError:
+                meta = {
+                    "_dd.propagation_error": "extract_max_size",
+                }
+                log.warning("failed to decode x-datadog-tags", exc_info=True)
             except TagsetDecodeError:
+                meta = {
+                    "_dd.propagation_error": "decoding_error",
+                }
                 log.debug("failed to decode x-datadog-tags: %r", tags_value, exc_info=True)
             finally:
                 # Datadog propagation should still attempt to decode even if tag
