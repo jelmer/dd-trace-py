@@ -24,11 +24,11 @@ def test_disable():
 
 def test_fork():
     telemetry.telemetry_writer.enable()
+    telemetry.telemetry_writer.add_integration("fooo", True)
 
-    pid = os.fork()
-    if pid > 0:
-        assert telemetry.telemetry_writer.status == ServiceStatus.RUNNING
-    else:
+    assert len(telemetry.telemetry_writer._events_queue) > 0
+    assert len(telemetry.telemetry_writer._integrations_queue) > 0
+    if os.fork() == 0:
         assert telemetry.telemetry_writer._forked is True
         assert telemetry.telemetry_writer._integrations_queue == []
         assert telemetry.telemetry_writer._events_queue == []
