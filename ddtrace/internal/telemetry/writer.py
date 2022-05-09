@@ -50,9 +50,12 @@ class TelemetryWriter(PeriodicService):
         self._events_queue = []  # type: List[Dict]
         self._integrations_queue = []  # type: List[Dict]
         self._lock = forksafe.Lock()  # type: forksafe.ResetObject
+        self._forked = False
 
         # _sequence is a counter representing the number of requests sent by the writer
         self._sequence = 1  # type: int
+        # ensures one runtime id is used across forks
+        self._main_runtime_id = get_runtime_id()
 
     def _send_request(self, request):
         # type: (Dict) -> httplib.HTTPResponse
@@ -168,6 +171,9 @@ class TelemetryWriter(PeriodicService):
     def app_started_event(self):
         # type: () -> None
         """Sent when TelemetryWriter is enabled or forks"""
+        if self._forked:
+            # app-started events should only be sent by the main process
+            return
         # pkg_resources import is inlined for performance reasons
         # This import is an expensive operation
         import pkg_resources
@@ -182,6 +188,9 @@ class TelemetryWriter(PeriodicService):
     def _app_closing_event(self):
         # type: () -> None
         """Adds a Telemetry request which notifies the agent that an application instance has terminated"""
+        if self._forked:
+            # app-closing event should only be sent by the main process
+            return
         payload = {}  # type: Dict
         self.add_event(payload, "app-closing")
 
@@ -207,7 +216,7 @@ class TelemetryWriter(PeriodicService):
         """Initializes the required fields for a generic Telemetry Intake Request"""
         return {
             "tracer_time": int(time.time()),
-            "runtime_id": get_runtime_id(),
+            "runtime_id": self._main_runtime_id,
             "api_version": "v1",
             "seq_id": sequence_id,
             "application": get_application(config.service, config.version, config.env),
@@ -216,11 +225,13 @@ class TelemetryWriter(PeriodicService):
             "request_type": payload_type,
         }
 
-    def _restart(self):
+    def _fork_writer(self):
         # type: () -> None
-        if self.status == ServiceStatus.RUNNING:
-            self.disable()
-        self.enable()
+        self._forked = True
+        # Avoid sending duplicate events.
+        # Queued events should be sent in the main process.
+        self._flush_events_queue()
+        self._flush_integrations_queue()
 
     def disable(self):
         # type: () -> None
@@ -230,11 +241,11 @@ class TelemetryWriter(PeriodicService):
         """
         with self._lock:
             self._integrations_queue = []
+            self._events_queue = []
             self._enabled = False
             if self.status == ServiceStatus.STOPPED:
                 return
 
-            forksafe.unregister(self._restart)
             atexit.unregister(self.stop)
 
         self.stop()
@@ -252,7 +263,7 @@ class TelemetryWriter(PeriodicService):
             self.start()
             self._enabled = True
 
-            forksafe.register(self._restart)
+            forksafe.register(self._fork_writer)
             atexit.register(self.stop)
 
         # add_event _locks around adding to the events queue
