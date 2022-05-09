@@ -139,8 +139,8 @@ class _DatadogMultiHeader:
 
         # Only propagate tags that are allowed for propagation
         tags_to_encode = {
-            k: v
-            for k, v in ((ensure_str(k), ensure_str(v)) for k, v in span_context._meta.items())
+            k: ensure_str(v)
+            for k, v in ((ensure_str(k), v) for k, v in span_context._meta.items())
             if k in _DatadogMultiHeader._X_DATADOG_TAGS_ALLOW
         }  # type: Dict[str, str]
 
