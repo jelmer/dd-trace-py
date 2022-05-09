@@ -653,6 +653,14 @@ jobs:
           pattern: "graphql"
           snapshot: true
 
+  graphene:
+    <<: *contrib_job_small
+    parallelism: 5
+    steps:
+      - run_test:
+          pattern: "graphene"
+          snapshot: true
+
   grpc:
     <<: *machine_executor
     parallelism: 7
@@ -1142,6 +1150,7 @@ workflows:
       - flask: *requires_base_venvs
       - futures: *requires_base_venvs
       - gevent: *requires_base_venvs
+      - graphene: *requires_base_venvs
       - graphql: *requires_base_venvs
       - grpc: *requires_base_venvs
       - httplib: *requires_base_venvs

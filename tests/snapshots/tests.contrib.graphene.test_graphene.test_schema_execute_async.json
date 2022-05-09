@@ -1,0 +1,23 @@
+[[
+  {
+    "name": "graphql",
+    "service": "graphql",
+    "resource": " query something{ patron { id name age } } ",
+    "trace_id": 0,
+    "span_id": 1,
+    "parent_id": 0,
+    "type": "web",
+    "meta": {
+      "runtime-id": "746d7413cc294688b4fc2b8e6dfab0d2"
+    },
+    "metrics": {
+      "_dd.agent_psr": 1.0,
+      "_dd.measured": 1,
+      "_dd.top_level": 1,
+      "_dd.tracer_kr": 1.0,
+      "_sampling_priority_v1": 1,
+      "system.pid": 6138
+    },
+    "duration": 4443000,
+    "start": 1652214142812289000
+  }]]
