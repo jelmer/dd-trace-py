@@ -8,7 +8,7 @@
     "parent_id": 0,
     "type": "web",
     "meta": {
-      "runtime-id": "09a688a07a134b5d9bb600300886b8ab"
+      "runtime-id": "4ed5094ecf7c425c9851bd9a695a149b"
     },
     "metrics": {
       "_dd.agent_psr": 1.0,
@@ -16,8 +16,8 @@
       "_dd.top_level": 1,
       "_dd.tracer_kr": 1.0,
       "_sampling_priority_v1": 1,
-      "system.pid": 165
+      "system.pid": 5081
     },
-    "duration": 2422500,
-    "start": 1652112237347392200
+    "duration": 2358000,
+    "start": 1652211191151714000
   }]]

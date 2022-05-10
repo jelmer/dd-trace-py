@@ -647,7 +647,7 @@ jobs:
 
   graphql:
     <<: *machine_executor
-    parallelism: 7
+    parallelism: 5
     steps:
       - run_test:
           pattern: "graphql"
@@ -1052,6 +1052,7 @@ requires_tests: &requires_tests
     - flask
     - futures
     - gevent
+    - graphql
     - grpc
     - httplib
     - httpx
