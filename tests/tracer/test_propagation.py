@@ -163,7 +163,6 @@ def test_extract(tracer):
             "_dd.p.dm": "value",
             "any": "tag",
         }
-        # TODO: Should x-datadog-tags be in shallow copy?
         with tracer.trace("child_span") as child_span:
             assert child_span.trace_id == 1234
             assert child_span.parent_id != 5678

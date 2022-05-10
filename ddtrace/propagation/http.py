@@ -103,7 +103,7 @@ class _DatadogMultiHeader:
     Restrictions:
 
       - All tag-value pairs in `x-datadog-tags` are extracted from incoming requests.
-      - An allow list restricts the contents of ``x-datadog-tags`` injected into outgoing requests.
+      - An allow list restricts ``x-datadog-tags`` injected into outgoing requests.
       - The ``_dd.p.dm`` tracer tag is used to propagate the sampling mechanism.
         Users must opt into propagating the service as part of ``_dd.p.dm`` by
         configuring
