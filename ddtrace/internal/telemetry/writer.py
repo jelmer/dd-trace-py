@@ -54,8 +54,6 @@ class TelemetryWriter(PeriodicService):
 
         # _sequence is a counter representing the number of requests sent by the writer
         self._sequence = 1  # type: int
-        # ensures one runtime id is used across forks
-        self._main_runtime_id = get_runtime_id()
 
     def _send_request(self, request):
         # type: (Dict) -> httplib.HTTPResponse
@@ -120,13 +118,18 @@ class TelemetryWriter(PeriodicService):
                     exc_info=True,
                 )
 
+    def _start_service(self, *args, **kwargs):
+        # type: (...) -> None
+        self.app_started_event()
+        return super(TelemetryWriter, self)._start_service(*args, **kwargs)
+
     def on_shutdown(self):
         self._app_closing_event()
         self.periodic()
 
     def _stop_service(self, *args, **kwargs):
         # type: (...) -> None
-        super(TelemetryWriter, self)._stop_service()
+        super(TelemetryWriter, self)._stop_service(*args, **kwargs)
         self.join()
 
     def add_event(self, payload, payload_type):
@@ -216,7 +219,7 @@ class TelemetryWriter(PeriodicService):
         """Initializes the required fields for a generic Telemetry Intake Request"""
         return {
             "tracer_time": int(time.time()),
-            "runtime_id": self._main_runtime_id,
+            "runtime_id": get_runtime_id(),
             "api_version": "v1",
             "seq_id": sequence_id,
             "application": get_application(config.service, config.version, config.env),
@@ -232,6 +235,7 @@ class TelemetryWriter(PeriodicService):
         # Queued events should be sent in the main process.
         self._flush_events_queue()
         self._flush_integrations_queue()
+        self.start()
 
     def disable(self):
         # type: () -> None
@@ -256,15 +260,11 @@ class TelemetryWriter(PeriodicService):
         Enable the instrumentation telemetry collection service. If the service has already been
         activated before, this method does nothing. Use ``disable`` to turn off the telemetry collection service.
         """
-        with self._lock:
-            if self.status == ServiceStatus.RUNNING:
-                return
+        if self.status == ServiceStatus.RUNNING:
+            return
 
-            self.start()
-            self._enabled = True
+        self.start()
+        self._enabled = True
 
-            forksafe.register(self._fork_writer)
-            atexit.register(self.stop)
-
-        # add_event _locks around adding to the events queue
-        self.app_started_event()
+        forksafe.register(self._fork_writer)
+        atexit.register(self.stop)

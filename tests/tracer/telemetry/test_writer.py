@@ -272,7 +272,8 @@ def test_send_request_exception():
 def test_telemetry_graceful_shutdown(mock_time, mock_send_request, telemetry_writer):
     telemetry_writer.start()
     telemetry_writer.stop()
-    assert httpretty.last_request().parsed_body == _get_request_body({}, "app-closing")
+    assert len(httpretty.latest_requests()) == 2
+    assert httpretty.last_request().parsed_body == _get_request_body({}, "app-closing", 2)
 
 
 def _get_request_body(payload, payload_type, seq_id=1):
