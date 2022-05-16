@@ -12,8 +12,8 @@ from ..constants import USER_KEEP
 from ..context import Context
 from ..internal._tagset import TagsetDecodeError
 from ..internal._tagset import TagsetEncodeError
-from ..internal._tagset import TagsetMaxSizeEncodeError
 from ..internal._tagset import TagsetMaxSizeDecodeError
+from ..internal._tagset import TagsetMaxSizeEncodeError
 from ..internal._tagset import decode_tagset_string
 from ..internal._tagset import encode_tagset_values
 from ..internal.compat import ensure_str
